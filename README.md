@@ -82,5 +82,5 @@ Built for developers tired of boring commit messages. Star ⭐ if it saves your 
 
 ```bash
 # One-liner to add to your repo
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/yourusername/smartgit-commit/main/smart-commit.ps1" -OutFile "smart-commit.ps1"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/sundar-prakash/smartgit-commit/main/smart-commit.ps1" -OutFile "smart-commit.ps1"
 ```
