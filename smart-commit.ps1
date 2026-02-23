@@ -49,22 +49,50 @@ if ($targetBranch -ne $currentBranch -and -not (git ls-remote --heads origin $ta
     }
 }
 
-# Safe pull (stash → pull → pop)
+# FIXED SYNC: Handle unstaged changes + clean rebase
 Write-Host "[SYNC] Pulling latest changes..." -ForegroundColor Yellow
-git stash push -m "temp-stash-$(Get-Date -Format 'HHmmss')" -q
-git pull origin $targetBranch --rebase -q
-git stash pop -q
+
+# Check for unstaged changes before rebase
+$unstaged = git diff --quiet 2>$null; $unstagedExit = $LASTEXITCODE
+if (-not $unstagedExit) {
+    Write-Warning "Unstaged changes detected. Stashing first..."
+    git stash push -m "temp-smart-commit-stash-$(Get-Date -Format 'HHmmss')" -q
+    $stashed = $true
+}
+
+# Clean fetch + rebase
+git fetch origin $targetBranch -q
+git rebase origin/$targetBranch -q
+
+# Restore stash if needed
+if ($stashed) {
+    git stash pop -q
+    Write-Host "[RESTORE] Stash popped (your unstaged changes preserved)" -ForegroundColor Green
+}
 
 Write-Host "`n[COMMIT] Pushing to $targetBranch..." -ForegroundColor Green
 git add .
 git commit -m "$CustomMessage"
 
-try {
-    git push origin $targetBranch
+# FIXED PUSH: Ask permission before force
+$pushResult = git push origin $targetBranch 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[REJECTED] Push failed - remote ahead. Force push? (y/N)" -ForegroundColor Red
+    $force = Read-Host
+    if ($force -match '^y') {
+        Write-Host "[FORCE] Using --force-with-lease..." -ForegroundColor Yellow
+        git push origin $targetBranch --force-with-lease 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "[FAILED] Force push rejected. Run 'git status' and resolve manually."
+            exit 1
+        }
+        Write-Host "[OK] Force pushed successfully!" -ForegroundColor Green
+    } else {
+        Write-Error "[ABORT] Push cancelled. Run 'git push' manually if needed."
+        exit 1
+    }
+} else {
     Write-Host "[OK] Pushed successfully!" -ForegroundColor Green
-} catch {
-    Write-Host "[RETRY] Force push..." -ForegroundColor Yellow
-    git push origin $targetBranch --force-with-lease
 }
 
 Write-Host "`n[DONE] Commit: $CustomMessage" -ForegroundColor Magenta
