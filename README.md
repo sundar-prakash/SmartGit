@@ -22,6 +22,8 @@
 
 ## 🚀 Quick Start
 
+### Windows
+
 ```powershell
 # Auto-analyze & commit to current branch
 .\smart-commit.ps1
@@ -35,6 +37,17 @@
 # Full power
 .\smart-commit.ps1 -CustomMessage "fix: navbar responsive" -Branch "hotfix/ui"
 ```
+
+### Linux (bash)
+
+```bash
+chmod +x git-smart-commit.sh
+./git-smart-commit.sh                    # Auto message, current branch
+./git-smart-commit.sh -m "Fix login bug" # Custom message
+./git-smart-commit.sh -b feature/new-ui  # Target specific branch
+./git-smart-commit.sh --force            # Auto-create missing branch
+```
+
 
 ## 🎯 Example Output
 
